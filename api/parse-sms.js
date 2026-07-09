@@ -30,7 +30,7 @@ Return ONLY the JSON object, nothing else. No markdown, no backticks.
 SMS: ${sms}`
           }]
         }],
-        generationConfig: { temperature: 0, maxOutputTokens: 300 }
+        generationConfig: { temperature: 0, maxOutputTokens: 1024 }
       })
     });
 
@@ -41,7 +41,7 @@ SMS: ${sms}`
     }
 
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const match = text.match(/\{[\s\S]*?\}/);
+    const match = text.match(/\{[\s\S]*\}/);
     if (!match) throw new Error('No JSON in response: ' + text);
 
     const parsed = JSON.parse(match[0]);
