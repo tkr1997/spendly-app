@@ -12,28 +12,17 @@ export default async function handler(req, res) {
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: `You are an expense parser. Given a bank or UPI SMS, extract: name (merchant/payee or brief description), amount (number only, no currency symbol), category (one of: Food, Transport, Shopping, Bills, Health, Entertainment, Other), date (YYYY-MM-DD, default today if unclear).
-Respond ONLY with valid JSON like: {"name":"Swiggy","amount":450,"category":"Food","date":"2026-07-08"}. No markdown, no explanation.
+  const geminiRes = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: `Parse this SMS and return JSON with fields name, amount, category, date: ${sms}` }] }],
+      generationConfig: { temperature: 0, maxOutputTokens: 200 }
+    })
+  });
 
-SMS: ${sms}`
-          }]
-        }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 200 }
-      })
-    });
-
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
-    res.status(200).json(parsed);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to parse SMS', detail: err.message });
-  }
+  const data = await geminiRes.json();
+  
+  // Return raw response so we can see exactly what Gemini returns
+  return res.status(200).json({ raw: data, key_present: !!GEMINI_API_KEY });
 }
